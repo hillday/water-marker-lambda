@@ -32,7 +32,7 @@ aws_emr_presto_custom_autoscalling
 ├── lambda_function.rb # lambda 函数
 ├── cv2-python37.zip # lambda 依赖层
 ```
-把函数代码复制到aws中，然后添加层。
+把函数代码复制到aws lambda 函数中，然后添加层。
 
 ### 效果
 水印宽为`320`,高为`88`。红色框表示水印大小、位置。
