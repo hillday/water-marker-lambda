@@ -43,7 +43,6 @@ aws_emr_presto_custom_autoscalling
    ![](./images/test_water960_544.png)
 3. 当输入视频宽为`544`,高为`968`时<br/>
    ![](./images/test_water544_968.png)
-其他比例类似。
 
 
 ### 使用到的框架
