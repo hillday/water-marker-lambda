@@ -43,12 +43,14 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
     new_water_img_w = 0 # 新水印图像宽度
     new_water_img_h = 0 # 新水印图像高度
     
+    # 水印缩放阀值，避免缩放的时候过大
     lm = 0.7
     # 横屏，短边为高
     if box_w > box_h :
         new_water_img_h = int(box_h * scale)
         new_water_img_w = int((water_img_w/(water_img_h * 1.0)) * new_water_img_h)
         
+        # 如果宽度缩放过大，则根据阀值重新缩放
         if new_water_img_w > box_w * lm:
             new_water_img_w = int(box_w * lm)
             new_water_img_h = int((water_img_h/(water_img_w * 1.0)) * new_water_img_w)
@@ -59,6 +61,7 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
         new_water_img_w = int(box_w * scale)
         new_water_img_h = int((water_img_h/(water_img_w * 1.0)) * new_water_img_w)
         
+        # 如果宽度缩放过大，则根据阀值重新缩放
         if new_water_img_h > box_h * lm:
             new_water_img_h = int(box_h * lm)
             new_water_img_w = int((water_img_w/(water_img_h * 1.0)) * new_water_img_h)
