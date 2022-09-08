@@ -43,14 +43,12 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
     new_water_img_w = 0 # 新水印图像宽度
     new_water_img_h = 0 # 新水印图像高度
     
-    # 水印缩放阀值，避免缩放的时候过大
     lm = 0.7
     # 横屏，短边为高
     if box_w > box_h :
         new_water_img_h = int(box_h * scale)
         new_water_img_w = int((water_img_w/(water_img_h * 1.0)) * new_water_img_h)
         
-        # 如果宽度缩放过大，则根据阀值重新缩放
         if new_water_img_w > box_w * lm:
             new_water_img_w = int(box_w * lm)
             new_water_img_h = int((water_img_h/(water_img_w * 1.0)) * new_water_img_w)
@@ -61,7 +59,6 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
         new_water_img_w = int(box_w * scale)
         new_water_img_h = int((water_img_h/(water_img_w * 1.0)) * new_water_img_w)
         
-        # 如果宽度缩放过大，则根据阀值重新缩放
         if new_water_img_h > box_h * lm:
             new_water_img_h = int(box_h * lm)
             new_water_img_w = int((water_img_w/(water_img_h * 1.0)) * new_water_img_h)
@@ -70,27 +67,20 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
     
     # 水印图像右下角坐标
     p_x1 = x1 - margin_val
-    p_y1 = y1 - margin_val
+    # 调整y,使其视觉上看起来边距一致
+    adjust_my = int(margin_val * 0.1) + 1
+    p_y1 = y1 - margin_val + adjust_my
     
     # 水印图像右上角坐标
     p_x0 = p_x1 - new_water_img_w
     p_y0 = p_y1 - new_water_img_h
     
     return (p_x0, p_y0, new_water_img_w, new_water_img_h)
-
-# 模拟效果 水印位置和大小
-'''
-@vw 视频宽度
-@vh 视频高度
-@px 水印位置 x
-@py 水印位置 y
-@w  水印宽度
-@h  水印高度
-'''
-def test_result(vw,vh,px,py,w,h):
+    
+def test_result(boxs,vw,vh,px,py,w,h):
     img = np.zeros((vh, vw, 3), np.uint8)
     # 浅灰色背景
-    img.fill(200)
+    img.fill(10)
     
     # 绘制一个红色矩形
     ptLeftTop = (px, py)
@@ -98,24 +88,74 @@ def test_result(vw,vh,px,py,w,h):
     point_color = (0, 0, 255) # BGR
     thickness = 1
     lineType = 8
-    cv2.rectangle(img, ptLeftTop, ptRightBottom, point_color, thickness, lineType)
-    cv2.imwrite('/tmp/test_water544_968.png', img)
+    # cv2.rectangle(img, ptLeftTop, ptRightBottom, point_color, thickness, lineType)
     
-    BUCKET = 'xxx' #替换为自己的存储桶
+    # 绘制九宫格
+    point_color = (0, 255, 0) # BGR
+    thickness = 2
+    lineType = 8
+    
+    (x0s,y0s,x0e,y0e) = boxs[1]
+    (x1s,y1s,x1e,y1e) = boxs[6]
+    
+    ptStart = (x0s,y0s)
+    ptEnd = (x1e,y1e)
+    
+    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
+
+    (x0s,y0s,x0e,y0e) = boxs[2]
+    (x1s,y1s,x1e,y1e) = boxs[7]
+    
+    ptStart = (x0s,y0s)
+    ptEnd = (x1e,y1e)
+    
+    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
+
+    (x0s,y0s,x0e,y0e) = boxs[3]
+    (x1s,y1s,x1e,y1e) = boxs[2]
+    
+    ptStart = (x0s,y0s)
+    ptEnd = (x1e,y1e)
+    
+    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
+
+    (x0s,y0s,x0e,y0e) = boxs[6]
+    (x1s,y1s,x1e,y1e) = boxs[5]
+    
+    ptStart = (x0s,y0s)
+    ptEnd = (x1e,y1e)
+    
+    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
+    
+    BUCKET = 'mytest-hillday07'
     client = boto3.client('s3')
-    client.upload_file('/tmp/test_water544_968.png', BUCKET, 'water/test_water544_968.png')
+    
+    client.download_file(BUCKET,'water/SnapTube.png', '/tmp/SnapTube.png')
+    watermark = cv2.imread("/tmp/SnapTube.png")
+    wm_dim = (w,h)
+    resized_wm = cv2.resize(watermark, wm_dim, interpolation=cv2.INTER_AREA)
+    
+    roi = img[py:py+h, px:px + w]
+    result = cv2.addWeighted(roi, 1, resized_wm, 0.6, 0)
+    img[py:py+h, px:px + w] = result
+
+    cv2.imwrite('/tmp/test_water360_642.png', img)
+    
+    
+   
+    client.upload_file('/tmp/test_water360_642.png', BUCKET, 'water/test_water360_642.png')
     
     
 
 def lambda_handler(event, context):
-    vw = 544
-    vh = 968
+    vw = 360
+    vh = 642
     box_list = divide_nine_grids(vw,vh)
     
-    (px,py,w,h) = cal_pos_watermark_by_box(box_list[8],320,88,0.5)
+    (px,py,w,h) = cal_pos_watermark_by_box(box_list[8],320,88,0.7,0.06)
     
     print(px,py,w,h)
-    test_result(vw,vh,px,py,w,h)
+    test_result(box_list,vw,vh,px,py,w,h)
     # TODO implement
     return {
         'statusCode': 200,
