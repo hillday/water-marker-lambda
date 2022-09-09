@@ -2,6 +2,7 @@ import json
 import cv2
 import numpy as np
 import boto3
+from cv2 import IMREAD_UNCHANGED
 
 
 # 根据宽度和高度分割为九宫格
@@ -26,6 +27,12 @@ def divide_nine_grids(w, h):
     
     return box_list
 
+def to_even(v):
+    ev = v
+    if (v % 2) != 0:
+        ev = v + 1
+    return ev
+        
 
 # 根据宫格和水印图像大小，水印根据短边缩放比例计算水印大小和位置
 '''
@@ -65,6 +72,8 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
         
         margin_val = int(box_w * margin_right_bottom)
     
+    new_water_img_w = to_even(new_water_img_w)
+    new_water_img_h = to_even(new_water_img_h)
     # 水印图像右下角坐标
     p_x1 = x1 - margin_val
     # 调整y,使其视觉上看起来边距一致
@@ -127,11 +136,11 @@ def test_result(boxs,vw,vh,px,py,w,h):
     
     cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
     
-    BUCKET = 'mytest-hillday07'
+    BUCKET = 'xxxxx'
     client = boto3.client('s3')
     
-    client.download_file(BUCKET,'water/SnapTube.png', '/tmp/SnapTube.png')
-    watermark = cv2.imread("/tmp/SnapTube.png")
+    client.download_file(BUCKET,'water/xxx.png', '/tmp/xxx.png')
+    watermark = cv2.imread("/tmp/xxx.png")
     wm_dim = (w,h)
     resized_wm = cv2.resize(watermark, wm_dim, interpolation=cv2.INTER_AREA)
     
