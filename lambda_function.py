@@ -72,8 +72,8 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
         
         margin_val = int(box_w * margin_right_bottom)
     
-    new_water_img_w = to_even(new_water_img_w)
-    new_water_img_h = to_even(new_water_img_h)
+    new_water_img_w = new_water_img_w
+    new_water_img_h = new_water_img_h
     # 水印图像右下角坐标
     p_x1 = x1 - margin_val
     # 调整y,使其视觉上看起来边距一致
