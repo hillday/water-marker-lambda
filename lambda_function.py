@@ -1,8 +1,7 @@
 import json
-import cv2
-import numpy as np
+import subprocess
+import shlex
 import boto3
-from cv2 import IMREAD_UNCHANGED
 
 
 # 根据宽度和高度分割为九宫格
@@ -76,95 +75,107 @@ def cal_pos_watermark_by_box(box,water_img_w,water_img_h, scale = 1.0, margin_ri
     new_water_img_h = new_water_img_h
     # 水印图像右下角坐标
     p_x1 = x1 - margin_val
-    # 调整y,使其视觉上看起来边距一致
-    adjust_my = int(margin_val * 0.1) + 1
-    p_y1 = y1 - margin_val + adjust_my
+    p_y1 = y1 - margin_val
     
     # 水印图像右上角坐标
     p_x0 = p_x1 - new_water_img_w
     p_y0 = p_y1 - new_water_img_h
     
     return (p_x0, p_y0, new_water_img_w, new_water_img_h)
-    
-def test_result(boxs,vw,vh,px,py,w,h):
-    img = np.zeros((vh, vw, 3), np.uint8)
-    # 浅灰色背景
-    img.fill(10)
-    
-    # 绘制一个红色矩形
-    ptLeftTop = (px, py)
-    ptRightBottom = (px+w, py+h)
-    point_color = (0, 0, 255) # BGR
-    thickness = 1
-    lineType = 8
-    # cv2.rectangle(img, ptLeftTop, ptRightBottom, point_color, thickness, lineType)
-    
-    # 绘制九宫格
-    point_color = (0, 255, 0) # BGR
-    thickness = 2
-    lineType = 8
-    
-    (x0s,y0s,x0e,y0e) = boxs[1]
-    (x1s,y1s,x1e,y1e) = boxs[6]
-    
-    ptStart = (x0s,y0s)
-    ptEnd = (x1e,y1e)
-    
-    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
 
-    (x0s,y0s,x0e,y0e) = boxs[2]
-    (x1s,y1s,x1e,y1e) = boxs[7]
-    
-    ptStart = (x0s,y0s)
-    ptEnd = (x1e,y1e)
-    
-    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
 
-    (x0s,y0s,x0e,y0e) = boxs[3]
-    (x1s,y1s,x1e,y1e) = boxs[2]
-    
-    ptStart = (x0s,y0s)
-    ptEnd = (x1e,y1e)
-    
-    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
+# 根据源分辨率和输出分辨率计算输出的高度
+'''
+@src_w 源视频宽
+@src_h 源视频高
+@out_w 输出视频宽
+@return 输出视频高
+'''
+def get_output_video_height(src_w,src_h,out_w):
+    return int((src_h/src_w) * out_w)
 
-    (x0s,y0s,x0e,y0e) = boxs[6]
-    (x1s,y1s,x1e,y1e) = boxs[5]
-    
-    ptStart = (x0s,y0s)
-    ptEnd = (x1e,y1e)
-    
-    cv2.line(img, ptStart, ptEnd, point_color, thickness, lineType)
-    
-    BUCKET = 'xxxxx'
+# 根据输出分辨按比例缩放水印，上传到S3
+'''
+@mark_s3_bucket 源水印图像存储桶
+@s3_image 源水印图像prefix
+@s3_mark_save_prefix 输出resize水印图像的路径
+@w 输出水印图像的宽
+@return 输出水印图像的S3地址
+'''
+def resize_mark_image(mark_s3_bucket, s3_image,s3_mark_save_prefix,w):
     client = boto3.client('s3')
-    
-    client.download_file(BUCKET,'water/xxx.png', '/tmp/xxx.png')
-    watermark = cv2.imread("/tmp/xxx.png")
-    wm_dim = (w,h)
-    resized_wm = cv2.resize(watermark, wm_dim, interpolation=cv2.INTER_AREA)
-    
-    roi = img[py:py+h, px:px + w]
-    result = cv2.addWeighted(roi, 1, resized_wm, 0.6, 0)
-    img[py:py+h, px:px + w] = result
+    client.download_file(mark_s3_bucket, s3_image, '/tmp/mark_image.png')
 
-    cv2.imwrite('/tmp/test_water360_642.png', img)
+    local_resize_name = f'mark_image_{w}.png'
+    local_mk_file = "/tmp/" + local_resize_name
+    ffmpeg_cmd = "/opt/bin/ffmpeg -i " + "/tmp/mark_image.png" + " -vf scale=" + str(w) + ":-1 " + local_mk_file
+    print(ffmpeg_cmd)
+    command1 = shlex.split(ffmpeg_cmd)
+    p1 = subprocess.run(command1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    s3_mark_resize_image = s3_mark_save_prefix + local_resize_name
+    client.upload_file(local_mk_file, mark_s3_bucket, s3_mark_resize_image)
+
+    s3_mark_resize_image_path = f's3://{mark_s3_bucket}/{s3_mark_resize_image}'
+    return s3_mark_resize_image_path
+
+# 根据不同的输出分辨率设置水印图像的位置和地址
+'''
+@src_w 源视频宽度
+@src_h 源视频高度
+@out_w 输出的分辨率宽
+@mcv_template 转码模版
+'''
+def set_watermaker_with_resolution(src_w,src_h,out_w,mcv_template):
+    out_h = get_output_video_height(src_w,src_h,out_w)
+    box_list = divide_nine_grids(out_w, out_h)
+    mark_w = 320 # 水印图像宽度
+    mark_h = 88 # 水印图像高度
+    mark_scale = 0.7 # 水印相对于宫格的缩放比例
+    mark_margin_right_bottom = 0.06 # 水印和右下角边距
+    mark_s3_bucket = 'xxx' # 水印所在所在存储桶
+    mark_s3_image = 'water/xxxx-mark.png' # 水印prefix
+    s3_mark_save_prefix = 'water/marks/' # 水印resize 后的路径
     
+    (px,py,w,h) = cal_pos_watermark_by_box(box_list[8],mark_w,mark_h,mark_scale,mark_margin_right_bottom)
+    resize_mark_image_url = resize_mark_image(mark_s3_bucket,mark_s3_image,s3_mark_save_prefix, w)
+    outputs = mcv_template['Settings']['OutputGroups'][0]['Outputs']
+
+    for index in range(len(outputs)):
+        if outputs[index]['VideoDescription']['Width'] == out_w:
+            insertable_image = outputs[index]['VideoDescription']['VideoPreprocessors']['ImageInserter']['InsertableImages'][0]
+            insertable_image['ImageInserterInput'] = resize_mark_image_url
+            insertable_image['ImageX'] = px
+            insertable_image['ImageY'] = py
+
+# 加载MediaConvert模版
+def load_mediaconvert_json_template():
+    with open('./template.json','r',encoding='utf8')as fp:
+        json_template = json.load(fp)
     
-   
-    client.upload_file('/tmp/test_water360_642.png', BUCKET, 'water/test_water360_642.png')
-    
-    
+    return json_template
 
 def lambda_handler(event, context):
-    vw = 360
-    vh = 642
-    box_list = divide_nine_grids(vw,vh)
+    src_w = 544
+    src_h = 968
     
-    (px,py,w,h) = cal_pos_watermark_by_box(box_list[8],320,88,0.7,0.06)
+    mcv_template = load_mediaconvert_json_template()
+
+    set_watermaker_with_resolution(src_w,src_h,360,mcv_template)
+    set_watermaker_with_resolution(src_w,src_h,480,mcv_template)
+    set_watermaker_with_resolution(src_w,src_h,720,mcv_template)
     
-    print(px,py,w,h)
-    test_result(box_list,vw,vh,px,py,w,h)
+    client = boto3.client('mediaconvert')
+    endpoints = client.describe_endpoints()
+    
+    mediaconvert_client = boto3.client('mediaconvert', endpoint_url=endpoints['Endpoints'][0]['Url'])
+    
+    #print(mcv_template)
+    # Create Convert Job
+    # 根据模板进行转码
+    response = mediaconvert_client.create_job(**mcv_template)
+    print(response)
+    # test_result(box_list,vw,vh,px,py,w,h)
     # TODO implement
     return {
         'statusCode': 200,

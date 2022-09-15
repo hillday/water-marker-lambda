@@ -1,0 +1,233 @@
+{
+    "Queue": "arn:aws:mediaconvert:us-east-1:xxxx:queues/Default",
+    "UserMetadata": {},
+    "Role": "arn:aws:iam::xxxxx:role/MediaConvert_Default_Role",
+    "Settings": {
+      "TimecodeConfig": {
+        "Source": "ZEROBASED"
+      },
+      "OutputGroups": [
+        {
+          "Name": "File Group",
+          "Outputs": [
+            {
+              "ContainerSettings": {
+                "Container": "MP4",
+                "Mp4Settings": {}
+              },
+              "VideoDescription": {
+                "Width": 360,
+                "VideoPreprocessors": {
+                  "Deinterlacer": {},
+                  "ImageInserter": {
+                    "InsertableImages": [
+                      {
+                        "Opacity": 100,
+                        "ImageInserterInput": "s3://xxxx/water/xxxx_360.png",
+                        "Layer": 1,
+                        "ImageX": 269,
+                        "ImageY": 613
+                      }
+                    ]
+                  }
+                },
+                "Sharpness": 100,
+                "CodecSettings": {
+                  "Codec": "H_264",
+                  "H264Settings": {
+                    "ParNumerator": 1,
+                    "NumberReferenceFrames": 3,
+                    "GopSize": 3,
+                    "GopBReference": "ENABLED",
+                    "HrdBufferSize": 1000000,
+                    "MaxBitrate": 400000,
+                    "ParDenominator": 1,
+                    "SpatialAdaptiveQuantization": "ENABLED",
+                    "TemporalAdaptiveQuantization": "ENABLED",
+                    "FlickerAdaptiveQuantization": "DISABLED",
+                    "RateControlMode": "QVBR",
+                    "QvbrSettings": {
+                      "QvbrQualityLevel": 8
+                    },
+                    "CodecProfile": "HIGH",
+                    "AdaptiveQuantization": "MEDIUM",
+                    "SceneChangeDetect": "TRANSITION_DETECTION",
+                    "QualityTuningLevel": "SINGLE_PASS_HQ",
+                    "GopSizeUnits": "SECONDS",
+                    "ParControl": "SPECIFIED",
+                    "NumberBFramesBetweenReferenceFrames": 5
+                  }
+                }
+              },
+              "AudioDescriptions": [
+                {
+                  "AudioSourceName": "Audio Selector 1",
+                  "CodecSettings": {
+                    "Codec": "AAC",
+                    "AacSettings": {
+                      "Bitrate": 64000,
+                      "CodingMode": "CODING_MODE_2_0",
+                      "SampleRate": 48000
+                    }
+                  }
+                }
+              ],
+              "NameModifier": "/nowm-360p-$rv$kbits-$w$w-$h$h-$f$fr"
+            },
+            {
+              "ContainerSettings": {
+                "Container": "MP4",
+                "Mp4Settings": {}
+              },
+              "VideoDescription": {
+                "Width": 480,
+                "VideoPreprocessors": {
+                  "Deinterlacer": {},
+                  "ImageInserter": {
+                    "InsertableImages": [
+                      {
+                        "Opacity": 100,
+                        "ImageInserterInput": "s3://xxxxx/water/xxxx_480.png",
+                        "Layer": 1,
+                        "ImageX": 359,
+                        "ImageY": 814
+                      }
+                    ]
+                  }
+                },
+                "Sharpness": 100,
+                "CodecSettings": {
+                  "Codec": "H_264",
+                  "H264Settings": {
+                    "ParNumerator": 1,
+                    "NumberReferenceFrames": 3,
+                    "GopSize": 3,
+                    "GopBReference": "ENABLED",
+                    "HrdBufferSize": 2000000,
+                    "MaxBitrate": 900000,
+                    "ParDenominator": 1,
+                    "SpatialAdaptiveQuantization": "ENABLED",
+                    "TemporalAdaptiveQuantization": "ENABLED",
+                    "FlickerAdaptiveQuantization": "DISABLED",
+                    "RateControlMode": "QVBR",
+                    "QvbrSettings": {
+                      "QvbrQualityLevel": 8
+                    },
+                    "CodecProfile": "HIGH",
+                    "AdaptiveQuantization": "MEDIUM",
+                    "SceneChangeDetect": "TRANSITION_DETECTION",
+                    "QualityTuningLevel": "SINGLE_PASS_HQ",
+                    "GopSizeUnits": "SECONDS",
+                    "ParControl": "SPECIFIED",
+                    "NumberBFramesBetweenReferenceFrames": 5
+                  }
+                }
+              },
+              "AudioDescriptions": [
+                {
+                  "AudioSourceName": "Audio Selector 1",
+                  "CodecSettings": {
+                    "Codec": "AAC",
+                    "AacSettings": {
+                      "Bitrate": 64000,
+                      "CodingMode": "CODING_MODE_2_0",
+                      "SampleRate": 48000
+                    }
+                  }
+                }
+              ],
+              "NameModifier": "/nowm-480p-$rv$kbits-$w$w-$h$h-$f$fr"
+            },
+            {
+              "ContainerSettings": {
+                "Container": "MP4",
+                "Mp4Settings": {}
+              },
+              "VideoDescription": {
+                "Width": 720,
+                "VideoPreprocessors": {
+                  "Deinterlacer": {},
+                  "ImageInserter": {
+                    "InsertableImages": [
+                      {
+                        "Opacity": 100,
+                        "ImageInserterInput": "s3://xxxx/water/xxxxx_720.png",
+                        "Layer": 1,
+                        "ImageX": 538,
+                        "ImageY": 1223
+                      }
+                    ]
+                  }
+                },
+                "Sharpness": 100,
+                "CodecSettings": {
+                  "Codec": "H_264",
+                  "H264Settings": {
+                    "ParNumerator": 1,
+                    "NumberReferenceFrames": 3,
+                    "GopSize": 3,
+                    "GopBReference": "ENABLED",
+                    "HrdBufferSize": 4000000,
+                    "MaxBitrate": 2000000,
+                    "ParDenominator": 1,
+                    "SpatialAdaptiveQuantization": "ENABLED",
+                    "TemporalAdaptiveQuantization": "ENABLED",
+                    "FlickerAdaptiveQuantization": "DISABLED",
+                    "RateControlMode": "QVBR",
+                    "QvbrSettings": {
+                      "QvbrQualityLevel": 8
+                    },
+                    "CodecProfile": "HIGH",
+                    "AdaptiveQuantization": "MEDIUM",
+                    "SceneChangeDetect": "TRANSITION_DETECTION",
+                    "QualityTuningLevel": "SINGLE_PASS_HQ",
+                    "GopSizeUnits": "SECONDS",
+                    "ParControl": "SPECIFIED",
+                    "NumberBFramesBetweenReferenceFrames": 5
+                  }
+                }
+              },
+              "AudioDescriptions": [
+                {
+                  "AudioSourceName": "Audio Selector 1",
+                  "CodecSettings": {
+                    "Codec": "AAC",
+                    "AacSettings": {
+                      "Bitrate": 64000,
+                      "CodingMode": "CODING_MODE_2_0",
+                      "SampleRate": 48000
+                    }
+                  }
+                }
+              ],
+              "NameModifier": "/nowm-720p-$rv$kbits-$w$w-$h$h-$f$fr"
+            }
+          ],
+          "OutputGroupSettings": {
+            "Type": "FILE_GROUP_SETTINGS",
+            "FileGroupSettings": {
+              "Destination": "s3://mytest-hillday07/water/output/"
+            }
+          }
+        }
+      ],
+      "Inputs": [
+        {
+          "AudioSelectors": {
+            "Audio Selector 1": {
+              "DefaultSelection": "DEFAULT"
+            }
+          },
+          "VideoSelector": {},
+          "TimecodeSource": "ZEROBASED",
+          "FileInput": "s3://mytest-hillday07/water/5251065794349787571.mp4"
+        }
+      ]
+    },
+    "AccelerationSettings": {
+      "Mode": "DISABLED"
+    },
+    "StatusUpdateInterval": "SECONDS_60",
+    "Priority": 0,
+    "HopDestinations": []
+  }
